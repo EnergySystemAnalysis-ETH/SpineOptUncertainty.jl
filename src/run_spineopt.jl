@@ -383,7 +383,7 @@ function create_model(mip_solver, lp_solver, use_direct_model, use_model_names, 
 end
 
 "Bridges are required for MGA algorithm"
-needs_bridges(model_algorithm) = model_algorithm in (:mga_algorithm, :hsj_mga_algorithm, :fuzzy_mga_algorithm, :multithreshold_mga_algorithm)
+needs_bridges = in((:mga_algorithm, :hsj_mga_algorithm, :fuzzy_mga_algorithm, :multithreshold_mga_algorithm))
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
