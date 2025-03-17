@@ -51,3 +51,18 @@ function _unit_weight_for_economic_representation(m; u, s, t)
         return 1
     end
 end
+
+
+function unit_investment_costs_in_scenario_costs(m::Model, t_range)
+    @fetch units_invested = m.ext[:spineopt].variables
+    unit = indices(unit_investment_cost)
+    return Dict(
+        s => (
+            + units_invested[u, s, t]
+            * _unit_weight_for_economic_representation(m; u, s, t)
+            * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (u, s, t) in units_invested_available_indices(m; unit=unit, t=t_range)
+    )
+end

@@ -80,3 +80,61 @@ function taxes(m::Model, t_range)
         )
     )
 end
+
+
+function taxes_in_scenario_costs(m::Model, t_range)
+    @fetch unit_flow = m.ext[:spineopt].variables
+    tax_net_to_flows = Dict(
+        s => (
+            + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
+            * duration(t)
+            * tax_net_unit_flow(m; node=n, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (n,) in indices(tax_net_unit_flow)
+        for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node), t=t_range)
+    )
+    tax_net_from_flows = Dict(
+        s => (
+            - unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
+            * duration(t)
+            * tax_net_unit_flow(m; node=n, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (n,) in indices(tax_net_unit_flow)
+        for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range)
+    )
+    tax_out_from_flows = Dict(
+        s => (
+            + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
+            * duration(t)
+            * tax_out_unit_flow(m; node=n, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (n,) in indices(tax_out_unit_flow)
+        for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range)
+    )
+    tax_in_to_flows = Dict(
+        s => (
+            + unit_flow[u, n, d, s, t]
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
+            * duration(t)
+            * tax_in_unit_flow(m; node=n, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (n,) in indices(tax_in_unit_flow)
+        for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node), t=t_range)
+    )
+    return mergewith(+, tax_net_to_flows, tax_net_from_flows, tax_out_from_flows, tax_in_to_flows)
+end

@@ -41,3 +41,20 @@ function fuel_costs(m::Model, t_range)
         )
     )
 end
+
+function fuel_costs_in_scenario_costs(m::Model, t_range)
+    @fetch unit_flow = m.ext[:spineopt].variables
+    return Dict(
+        s => (
+            unit_flow[u, n, d, s, t]
+            * duration(t)
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+            ) 
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * fuel_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+        )
+        for (u, ng, d) in indices(fuel_cost)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)
+    )
+end

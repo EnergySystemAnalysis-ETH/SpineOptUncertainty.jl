@@ -48,3 +48,17 @@ function _storage_weight_for_economic_representation(m; n, s, t)
         return 1
     end
 end
+
+function storage_investment_costs_in_scenario_costs(m::Model, t_range)
+    @fetch storages_invested = m.ext[:spineopt].variables
+    node = indices(storage_investment_cost)
+    return Dict(
+        s => (
+            + storages_invested[n, s, t]
+            * _storage_weight_for_economic_representation(m; n, s, t)
+            * storage_investment_cost(m; node=n, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+        for (n, s, t) in storages_invested_available_indices(m; node=node, t=t_range)
+    )
+end

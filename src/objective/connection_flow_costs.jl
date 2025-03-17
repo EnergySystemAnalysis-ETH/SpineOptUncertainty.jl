@@ -41,4 +41,20 @@ function connection_flow_costs(m::Model, t_range)
         )
     )
 end
-# TODO: add weight scenario tree
+
+function connection_flow_costs_in_scenario_costs(m::Model, t_range)
+    @fetch connection_flow = m.ext[:spineopt].variables
+    return Dict(
+        s => (
+            connection_flow[conn, n, d, s, t]
+            * duration(t)
+            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+               connection_discounted_duration[(connection=conn, stochastic_scenario=s, t=t)] : 1
+            )
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * connection_flow_cost(m; connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
+        )
+        for (conn, n, d) in indices(connection_flow_cost)
+        for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t_range)
+    )
+end
