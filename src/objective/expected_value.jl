@@ -17,30 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    start_up_costs(m::Model)
-
-Create an expression for unit startup costs.
-"""
-function start_up_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, start_up_costs_in_scenario_costs(m, t_range))
-    )
-end
-
-function start_up_costs_in_scenario_costs(m::Model, t_range)
-    @fetch units_started_up = m.ext[:spineopt].variables
-    start_up_costs = DefaultDict(0.0)
-    for (u, s, t) in units_on_indices(m; unit=indices(start_up_cost), t=t_range)
-        start_up_costs[s] += (
-            + units_started_up[u, s, t]
-            * start_up_cost(m; unit=u, stochastic_scenario=s, t=t)
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
-               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
+function expected_value(m::Model, scenario_cost_dict::Dict)
+    return sum(
+            cost * any_stochastic_scenario_weight(m, stochastic_scenario=scenario)
+            for (scenario, cost) in scenario_cost_dict;
+            init=0
         )
-    end
-    return Dict(start_up_costs)
 end

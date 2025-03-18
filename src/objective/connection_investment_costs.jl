@@ -23,19 +23,9 @@
 Create and expression for connection investment costs.
 """
 function connection_investment_costs(m::Model, t_range)
-    @fetch connections_invested = m.ext[:spineopt].variables
-    connection = indices(connection_investment_cost)
     @expression(
         m,
-        + sum(
-            connections_invested[c, s, t]
-            * _connection_weight_for_economic_representation(m; c, s, t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_investment_cost(m; connection=c, stochastic_scenario=s, t=t)
-            * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(m; connection=connection, t=t_range);
-            init=0,
-        )
+        expected_value(m, connection_investment_costs_in_scenario_costs(m, t_range))
     )
 end
 
@@ -52,13 +42,14 @@ end
 function connection_investment_costs_in_scenario_costs(m::Model, t_range)
     @fetch connections_invested = m.ext[:spineopt].variables
     connection = indices(connection_investment_cost)
-    return Dict(
-        s => (
+    connection_costs = DefaultDict(0.0)
+    for (c, s, t) in connections_invested_available_indices(m; connection=connection, t=t_range)
+        connection_costs[s] += (
             connections_invested[c, s, t]
             * _connection_weight_for_economic_representation(m; c, s, t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost(m; connection=c, stochastic_scenario=s, t=t)
         )
-        for (c, s, t) in connections_invested_available_indices(m; connection=connection, t=t_range)
-    )
+    end
+    return Dict(connection_costs)
 end

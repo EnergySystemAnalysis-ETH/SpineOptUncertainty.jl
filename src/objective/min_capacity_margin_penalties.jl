@@ -24,28 +24,17 @@ Create an expression for min_capacity_margin_penalty.
 """
 
 function min_capacity_margin_penalties(m::Model, t_range)
-    @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
     @expression(
         m,
-        + sum(
-            min_capacity_margin_slack[n, s, t]
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
-               node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * min_capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range);
-            init=0,
-        )        
+        expected_value(m, min_capacity_margin_penalties_in_scenario_costs(m, t_range))
     )
 end
 
 function min_capacity_margin_penalties_in_scenario_costs(m::Model, t_range)
     @fetch min_capacity_margin_slack = m.ext[:spineopt].variables
-    return Dict(
-        s => (
+    capacity_penalties = DefaultDict(0.0)
+    for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range)
+        capacity_penalties[s] += (
             min_capacity_margin_slack[n, s, t]
             * (use_economic_representation(model=m.ext[:spineopt].instance) ?
                node_discounted_duration[(node=n, stochastic_scenario=s, t=t)] : 1
@@ -54,6 +43,6 @@ function min_capacity_margin_penalties_in_scenario_costs(m::Model, t_range)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * min_capacity_margin_penalty(m; node=n, stochastic_scenario=s, t=t)
         )
-        for (n, s, t) in min_capacity_margin_slack_indices(m; t=t_range)
-    )
+    end
+    return Dict(capacity_penalties)
 end

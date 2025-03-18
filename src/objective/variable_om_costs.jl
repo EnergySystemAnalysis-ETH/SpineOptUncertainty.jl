@@ -23,39 +23,28 @@
 Create an expression for unit_flow variable operation costs.
 """
 function variable_om_costs(m::Model, t_range)
-    @fetch unit_flow = m.ext[:spineopt].variables
     @expression(
         m,
-        sum(
-            + unit_flow[u, n, d, s, t]
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
-               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-            for (ug, ng, d) in indices(vom_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range);
-            init=0,
-        )
+        expected_value(m, variable_om_costs_in_scenario_costs(m, t_range))
     )
 end
 
 function variable_om_costs_in_scenario_costs(m::Model, t_range)
     @fetch unit_flow = m.ext[:spineopt].variables
-    return Dict(
-        s => (
-            + unit_flow[u, n, d, s, t]
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
-               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)
-        )
-        for (ug, ng, d) in indices(vom_cost)
+    om_costs = DefaultDict(0.0)
+    for (ug, ng, d) in indices(vom_cost)
         for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range)
-    )
+            om_costs[s] += (
+                + unit_flow[u, n, d, s, t]
+                * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+                   unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+                ) 
+                * duration(t)
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * vom_cost(m; unit=ug, node=ng, direction=d, stochastic_scenario=s, t=t)
+            )
+        end
+    end
+    return Dict(om_costs)
 end
 

@@ -34,6 +34,7 @@ import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LibGit2
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
+import DataStructures.DefaultDict
 
 # Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
 import SpineInterface: Parameter, parameter_value
@@ -128,6 +129,7 @@ include("variables/variable_user_constraint_slack.jl")
 # Expressions
 include("expressions/capacity_margin.jl")
 # Objective
+include("objective/expected_value.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/connection_investment_costs.jl")
 include("objective/fixed_om_costs.jl")

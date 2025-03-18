@@ -37,5 +37,5 @@ const scenario_cost_parts = [
     variable_om_costs_in_scenario_costs
 ]
 
-create_scenario_costs(m, t_range) = reduce(mergewith(+), cost_part(m, t_range) for cost_part in scenario_cost_parts, init=Dict())
+create_scenario_costs(m, t_range) = reduce(mergewith(+), cost_part(m, t_range) for cost_part in scenario_cost_parts; init=Dict())
 create_safe_scenario_costs(m, t_range) = DefaultDict(0.0, create_scenario_costs(m, t_range))
