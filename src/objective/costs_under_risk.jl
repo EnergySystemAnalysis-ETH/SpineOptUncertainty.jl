@@ -42,7 +42,7 @@ function cvar(m::Model, beta::Float64, scenario_costs::Dict, scenario_probabilit
     !(0 < beta <= 1) && throw(DomainError(beta, "parameter not in the domain 0 < beta <= 1"))
     @variable(m, v) # TODO: save the v
     p = scenario_probability
-    return v + 1/beta * sum(p(scen) * positive_part_of_lp_term(m, cost - v) for (scen, cost) in scenario_costs)
+    return v + 1/beta * sum(p(scen) * positive_part_of_lp_term(m, cost - v) for (scen, cost) in scenario_costs; init=0)
 end
 
 function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:markowitz})
@@ -68,12 +68,13 @@ function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Func
 end
 
 function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:avg_semideviation})
-    return sum(probability(scen) * positive_part_of_lp_term(m, cost - mu) for (scen, cost) in scenario_costs)
+    return sum(probability(scen) * positive_part_of_lp_term(m, cost - mu) for (scen, cost) in scenario_costs; init=0)
 end
 
 function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:avg_gini_difference})
     return sum(
         positive_part_of_lp_term(m, cost1 - cost2) * probability(scen1) * probability(scen2)
         for (scen1, cost1) in scenario_costs for (scen2, cost2) in scenario_costs if scen1 != scen2
+        ; init=0
     )
 end
