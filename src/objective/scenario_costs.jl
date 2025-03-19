@@ -17,25 +17,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-import DataStructures.DefaultDict
-
 const scenario_cost_parts = [
-    connection_flow_costs_in_scenario_costs,
-    connection_investment_costs_in_scenario_costs,
-    fixed_om_costs_in_scenario_costs,
-    fuel_costs_in_scenario_costs,
-    min_capacity_margin_penalties_in_scenario_costs,
-    objective_penalties_in_scenario_costs,
-    renewable_curtailment_costs_in_scenario_costs,
-    res_proc_costs_in_scenario_costs,
-    shut_down_costs_in_scenario_costs.
-    start_up_costs_in_scenario_costs,
-    storage_investment_costs_in_scenario_costs,
-    taxes_in_scenario_costs,
-    unit_investment_costs_in_scenario_costs,
-    units_on_costs_in_scenario_costs,
-    variable_om_costs_in_scenario_costs
+    :connection_flow_costs_in_scenario_costs,
+    :connection_investment_costs_in_scenario_costs,
+    :fixed_om_costs_in_scenario_costs,
+    :fuel_costs_in_scenario_costs,
+    :min_capacity_margin_penalties_in_scenario_costs,
+    :objective_penalties_in_scenario_costs,
+    :renewable_curtailment_costs_in_scenario_costs,
+    :res_proc_costs_in_scenario_costs,
+    :shut_down_costs_in_scenario_costs,
+    :start_up_costs_in_scenario_costs,
+    :storage_investment_costs_in_scenario_costs,
+    :taxes_in_scenario_costs,
+    :unit_investment_costs_in_scenario_costs,
+    :units_on_costs_in_scenario_costs,
+    :variable_om_costs_in_scenario_costs
 ]
 
-create_scenario_costs(m, t_range) = reduce(mergewith(+), cost_part(m, t_range) for cost_part in scenario_cost_parts; init=Dict())
-create_safe_scenario_costs(m, t_range) = DefaultDict(0.0, create_scenario_costs(m, t_range))
+create_scenario_costs(m, t_range) = mergewith(+, (getproperty(SpineOpt, cost_part)(m, t_range) for cost_part in scenario_cost_parts)...)
+create_scenario_costs(m, in_window, beyond_window) = mergewith(+, create_scenario_costs(m, in_window), create_scenario_costs(m, beyond_window))
+
+function create_scenario_costs_in_current_window(m)
+    window_end = end_(current_window(m))
+    window_very_end = maximum(end_.(time_slice(m)))
+    beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
+    in_window = collect(to_time_slice(m; t=current_window(m)))
+    filter!(t -> !(t in in_window), beyond_window)
+    return create_scenario_costs(m, in_window, beyond_window)
+end

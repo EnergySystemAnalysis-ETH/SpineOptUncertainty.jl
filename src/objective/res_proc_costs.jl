@@ -23,10 +23,7 @@
 Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, res_proc_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, res_proc_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function res_proc_costs_in_scenario_costs(m::Model, t_range)

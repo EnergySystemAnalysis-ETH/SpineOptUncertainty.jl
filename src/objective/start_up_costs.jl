@@ -23,10 +23,7 @@
 Create an expression for unit startup costs.
 """
 function start_up_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, start_up_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, start_up_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function start_up_costs_in_scenario_costs(m::Model, t_range)

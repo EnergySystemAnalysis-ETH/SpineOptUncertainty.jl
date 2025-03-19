@@ -23,10 +23,7 @@
 Create an expression for fuel costs of units.
 """
 function fuel_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, fuel_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, fuel_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function fuel_costs_in_scenario_costs(m::Model, t_range)

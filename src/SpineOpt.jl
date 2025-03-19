@@ -129,7 +129,7 @@ include("variables/variable_user_constraint_slack.jl")
 # Expressions
 include("expressions/capacity_margin.jl")
 # Objective
-include("objective/expected_value.jl")
+include("objective/costs_under_risk.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/connection_investment_costs.jl")
 include("objective/fixed_om_costs.jl")
@@ -147,6 +147,7 @@ include("objective/total_costs.jl")
 include("objective/unit_investment_costs.jl")
 include("objective/units_on_costs.jl")
 include("objective/variable_om_costs.jl")
+include("objective/scenario_costs.jl")
 # Constraints
 include("constraints/constraint_candidate_connection_flow_lb.jl")
 include("constraints/constraint_candidate_connection_flow_ub.jl")

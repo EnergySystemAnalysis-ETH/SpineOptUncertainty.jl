@@ -24,11 +24,7 @@ Create an expression for objective penalties.
 """
 # TODO: find a better name for this; objective penalities is not self-speaking
 function objective_penalties(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, objective_penalties_in_scenario_costs(m, t_range))
-    )
-
+    return costs_under_risk!(m, objective_penalties_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function objective_penalties_in_scenario_costs(m::Model, t_range)

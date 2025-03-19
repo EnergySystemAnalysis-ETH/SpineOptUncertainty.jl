@@ -23,10 +23,7 @@
 Create and expression for storage investment costs.
 """
 function storage_investment_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, storage_investment_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, storage_investment_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
     
 function _storage_weight_for_economic_representation(m; n, s, t)

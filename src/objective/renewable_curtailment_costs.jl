@@ -23,10 +23,7 @@
 Create an expression for curtailment costs of renewables.
 """
 function renewable_curtailment_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, renewable_curtailment_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, renewable_curtailment_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function renewable_curtailment_costs_in_scenario_costs(m::Model, t_range)

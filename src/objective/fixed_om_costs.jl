@@ -23,13 +23,10 @@
 Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t_range)
-    @expression(
-        m,
-        expected_value(m, add_fixed_om_costs_to_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, fixed_om_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
-function add_fixed_om_costs_to_scenario_costs(m, t_range)
+function fixed_om_costs_in_scenario_costs(m, t_range)
     @fetch units_invested_available = m.ext[:spineopt].variables
     om_costs = DefaultDict(0.0)
     for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))

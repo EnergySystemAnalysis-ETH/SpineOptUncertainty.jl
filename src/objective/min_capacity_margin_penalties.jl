@@ -24,10 +24,7 @@ Create an expression for min_capacity_margin_penalty.
 """
 
 function min_capacity_margin_penalties(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, min_capacity_margin_penalties_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, min_capacity_margin_penalties_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function min_capacity_margin_penalties_in_scenario_costs(m::Model, t_range)

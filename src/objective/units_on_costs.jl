@@ -23,10 +23,7 @@
 Create an expression for units_on cost.
 """
 function units_on_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, units_on_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, units_on_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function units_on_costs_in_scenario_costs(m::Model, t_range)

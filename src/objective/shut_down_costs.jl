@@ -23,10 +23,7 @@
 Create an expression for unit shutdown costs.
 """
 function shut_down_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, shut_down_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, shut_down_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function shut_down_costs_in_scenario_costs(m::Model, t_range)

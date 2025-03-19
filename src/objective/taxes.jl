@@ -23,10 +23,7 @@
 Create an expression for unit taxes.
 """
 function taxes(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, taxes_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, taxes_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 

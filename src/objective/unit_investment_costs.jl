@@ -23,10 +23,7 @@
 Create and expression for unit investment costs.
 """
 function unit_investment_costs(m::Model, t_range)
-    @expression(
-        m,
-        expected_value(m, unit_investment_costs_in_scenario_costs(m, t_range))
-    )
+    return costs_under_risk!(m, unit_investment_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function _unit_weight_for_economic_representation(m; u, s, t)
