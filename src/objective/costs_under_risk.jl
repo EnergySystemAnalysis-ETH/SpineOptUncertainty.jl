@@ -53,11 +53,12 @@ end
 function markowitz_model(m::Model, lambda::Float64, scenario_costs::Dict, scenario_probability::Function, dispersion_type::Val)
     !(0 < lambda <= 1) && throw(DomainError(lambda, "parameter not in the domain 0 < lambda <= 1"))
     mu = expected_value(scenario_costs, scenario_probability)
-    delta = dispersion_metric(m, mu, scenario_costs, scenario_probability, dispersion_type)
+    delta = dispersion_metric(m, scenario_costs, scenario_probability, dispersion_type)
     return mu + lambda * delta
 end
 
-function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:max_semideviation})
+function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:max_semideviation})
+    mu = expected_value(scenario_costs, probability)
     d = @variable(m, lower_bound=0)
     for (scen, cost) in scenario_costs
         @constraint(m, d >= cost - mu)
@@ -65,11 +66,12 @@ function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Func
     return d
 end
 
-function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:avg_semideviation})
+function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:avg_semideviation})
+    mu = expected_value(scenario_costs, probability)
     return sum(probability(scen) * positive_part_of_lp_term(m, cost - mu) for (scen, cost) in scenario_costs; init=0)
 end
 
-function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:avg_gini_difference})
+function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:avg_gini_difference})
     return sum(
         positive_part_of_lp_term(m, cost1 - cost2) * probability(scen1) * probability(scen2)
         for (scen1, cost1) in scenario_costs for (scen2, cost2) in scenario_costs if scen1 != scen2
