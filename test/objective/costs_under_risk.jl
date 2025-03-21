@@ -238,6 +238,18 @@ function test_dispersion_metrics()
                 optimize!(m)
                 @test value(d) == 40.0
             end
+            @testset "no scenarios" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:max_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
+            end
         end
         @testset "average semideviation" begin
             @testset "no dispersion" begin
@@ -284,6 +296,19 @@ function test_dispersion_metrics()
                 set_silent(m)
                 optimize!(m)
                 @test value(d) == 20.0
+            end
+            @testset "no scenarios" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:avg_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
             end
         end
         @testset "gini difference" begin
