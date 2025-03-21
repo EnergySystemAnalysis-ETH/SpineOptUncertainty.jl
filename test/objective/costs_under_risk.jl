@@ -19,7 +19,8 @@
 
 using SpineOpt:
     expected_value,
-    positive_part_of_lp_term
+    positive_part_of_lp_term,
+    semideviation
 
 using JuMP
 using HiGHS
@@ -134,7 +135,62 @@ function test_positive_part()
     end
 end
 
+function test_semideviation()
+    @testset "semideviation" begin
+        @testset "semideviation with floats" begin
+            @testset "no deviation" begin
+                m = Model(HiGHS.Optimizer)
+                d = semideviation(m, 1.0, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
+            end
+            @testset "negative deviation" begin
+                m = Model(HiGHS.Optimizer)
+                d = semideviation(m, 0.5, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
+            end
+            @testset "positive deviation" begin
+                m = Model(HiGHS.Optimizer)
+                d = semideviation(m, 1.5, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.5
+            end
+        end
+        @testset "semideviation with expressions" begin
+            @testset "no deviation" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x)
+                d = semideviation(m, x, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
+            end
+            @testset "negative deviation" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x <= 0.5)
+                d = semideviation(m, x, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.0
+            end
+            @testset "positive deviation" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x >= 1.5)
+                d = semideviation(m, x, 1.0)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.5
+            end
+        end
+    end
+end
+
 @testset "costs under risk" begin
     test_expected_value()
     test_positive_part()
+    test_semideviation()
 end
