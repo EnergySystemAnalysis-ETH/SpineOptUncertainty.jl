@@ -20,7 +20,8 @@
 using SpineOpt:
     expected_value,
     positive_part_of_lp_term,
-    semideviation
+    semideviation,
+    dispersion_metric
 
 using JuMP
 using HiGHS
@@ -189,8 +190,67 @@ function test_semideviation()
     end
 end
 
+function test_dispersion_metrics()
+    @testset "dispersion metrics" begin
+        @testset "max semideviation" begin
+            @testset "no dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 10,
+                    :b => 10,
+                    :c => 10
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:max_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0
+            end
+            @testset "big positive dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 0,
+                    :b => 20,
+                    :c => 80
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:max_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 50.0
+            end
+            @testset "big negative dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 0,
+                    :b => 100,
+                    :c => 120
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:max_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 40.0
+            end
+        end
+        @testset "average semideviation" begin
+
+        end
+        @testset "gini difference" begin
+
+        end
+    end
+end
+
 @testset "costs under risk" begin
     test_expected_value()
     test_positive_part()
     test_semideviation()
+    test_dispersion_metrics()
 end
