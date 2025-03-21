@@ -240,7 +240,51 @@ function test_dispersion_metrics()
             end
         end
         @testset "average semideviation" begin
-
+            @testset "no dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 10,
+                    :b => 10,
+                    :c => 10
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:avg_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0
+            end
+            @testset "big positive dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 0,
+                    :b => 20,
+                    :c => 80
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:avg_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 12.5
+            end
+            @testset "big negative dispersion" begin
+                m = Model(HiGHS.Optimizer)
+                scenario_costs = Dict(
+                    :a => 0,
+                    :b => 100,
+                    :c => 120
+                )
+                scenario_probabilities = Dict(:a => 1/4, :b=> 1/2, :c => 1/4)
+                prob = (i) -> scenario_probabilities[i]
+                d = dispersion_metric(m, scenario_costs, prob, Val(:avg_semideviation))
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 20.0
+            end
         end
         @testset "gini difference" begin
 
