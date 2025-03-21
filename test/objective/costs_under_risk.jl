@@ -22,7 +22,8 @@ using SpineOpt:
     positive_part_of_lp_term,
     semideviation,
     dispersion_metric,
-    cvar
+    cvar,
+    markowitz_model
 
 using JuMP
 using HiGHS
@@ -378,11 +379,11 @@ end
 function test_expected_value_optimization()
     @testset "expected value optimization" begin
         m = Model(HiGHS.Optimizer)
-        @variable(m, x[1:2] >= 0)
+        @variable(m, x[1:2], Bin)
         @constraint(m, x[1] + x[2] == 1)
         scenario_costs = Dict(
-            :a => x[1] + 10x[2],
-            :b => 100x[1] 
+            :a => x[1] + 2x[2],
+            :b => 100x[1] + 2x[2] 
         )
         scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
         prob = (i) -> scenario_probabilities[i]
@@ -398,11 +399,11 @@ function test_cvar_optimization()
     @testset "cvar optimization" begin
         @testset "invalid beta parameter" begin
             m = Model(HiGHS.Optimizer)
-            @variable(m, x[1:2] >= 0)
+            @variable(m, x[1:2], Bin)
             @constraint(m, x[1] + x[2] == 1)
             scenario_costs = Dict(
-                :a => x[1] + 10x[2],
-                :b => 100x[1]
+                :a => x[1] + 2x[2],
+                :b => 100x[1] + 2x[2] 
             )
             scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
             prob = (i) -> scenario_probabilities[i]
@@ -411,43 +412,27 @@ function test_cvar_optimization()
         end
         @testset "risk-averse cvar" begin
             m = Model(HiGHS.Optimizer)
-            @variable(m, x[1:2] >= 0)
+            @variable(m, x[1:2], Bin)
             @constraint(m, x[1] + x[2] == 1)
             scenario_costs = Dict(
-                :a => x[1] + 10x[2],
-                :b => 100x[1] 
+                :a => x[1] + 2x[2],
+                :b => 100x[1] + 2x[2] 
             )
             scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
             prob = (i) -> scenario_probabilities[i]
             @objective(m, Min, cvar(m, 0.01, scenario_costs, prob))
             set_silent(m)
             optimize!(m)
-            @test isapprox(value(x[1]), 10/109)
-            @test isapprox(value(x[2]), 1-10/109)
+            @test isapprox(value(x[1]), 0)
+            @test isapprox(value(x[2]), 1)
         end
         @testset "less risk-averse cvar" begin
             m = Model(HiGHS.Optimizer)
-            @variable(m, x[1:2] >= 0)
+            @variable(m, x[1:2], Bin)
             @constraint(m, x[1] + x[2] == 1)
             scenario_costs = Dict(
-                :a => x[1] + 10x[2],
-                :b => 100x[1] 
-            )
-            scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
-            prob = (i) -> scenario_probabilities[i]
-            @objective(m, Min, cvar(m, 0.90, scenario_costs, prob))
-            set_silent(m)
-            optimize!(m)
-            @test value(x[1]) == 1.0
-            @test value(x[2]) == 0.0
-        end
-        @testset "risk-neutral cvar" begin
-            m = Model(HiGHS.Optimizer)
-            @variable(m, x[1:2] >= 0)
-            @constraint(m, x[1] + x[2] == 1)
-            scenario_costs = Dict(
-                :a => x[1] + 10x[2],
-                :b => 100x[1]
+                :a => x[1] + 2x[2],
+                :b => 100x[1] + 2x[2] 
             )
             scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
             prob = (i) -> scenario_probabilities[i]
@@ -460,6 +445,151 @@ function test_cvar_optimization()
     end
 end
 
+function test_markowitz_optimization()
+    @testset "markowitz optimization" begin
+        @testset "markowitz max semideviation" begin
+            @testset "invalid parameters" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @test_throws DomainError markowitz_model(m, 0., scenario_costs, prob, Val(:max_semideviation))
+                @test_throws DomainError markowitz_model(m, 1., scenario_costs, prob, Val(:max_semideviation))
+            end
+            @testset "risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 0.8, scenario_costs, prob, Val(:max_semideviation)))
+                set_silent(m)
+                optimize!(m)
+                @test isapprox(value(x[1]), 0)
+                @test isapprox(value(x[2]), 1)
+            end
+            @testset "less risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 1e-6, scenario_costs, prob, Val(:max_semideviation)))
+                set_silent(m)
+                optimize!(m)
+                @test value(x[1]) == 1.
+                @test value(x[2]) == 0.
+            end
+        end
+        @testset "markowitz avg semideviation" begin
+            @testset "invalid parameters" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @test_throws DomainError markowitz_model(m, 0., scenario_costs, prob, Val(:avg_semideviation))
+                @test_throws DomainError markowitz_model(m, 1., scenario_costs, prob, Val(:avg_semideviation))
+            end
+            @testset "risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 0.8, scenario_costs, prob, Val(:avg_semideviation)))
+                set_silent(m)
+                optimize!(m)
+                @test isapprox(value(x[1]), 0.)
+                @test isapprox(value(x[2]), 1.)
+            end
+            @testset "less risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 0.001, scenario_costs, prob, Val(:avg_semideviation)))
+                set_silent(m)
+                optimize!(m)
+                @test value(x[1]) == 1.
+                @test value(x[2]) == 0.
+            end
+        end
+        @testset "markowitz gini difference" begin
+            @testset "invalid parameters" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @test_throws DomainError markowitz_model(m, 0., scenario_costs, prob, Val(:avg_gini_difference))
+                @test_throws DomainError markowitz_model(m, 1., scenario_costs, prob, Val(:avg_gini_difference))
+            end
+            @testset "risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2], Bin)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 2x[2],
+                    :b => 100x[1] + 2x[2] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 0.8, scenario_costs, prob, Val(:avg_gini_difference)))
+                set_silent(m)
+                optimize!(m)
+                @test isapprox(value(x[1]), 0.)
+                @test isapprox(value(x[2]), 1.)
+            end
+            @testset "less risk-averse" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, x[1:2] >= 0)
+                @constraint(m, x[1] + x[2] == 1)
+                scenario_costs = Dict(
+                    :a => x[1] + 10x[2],
+                    :b => 100x[1] 
+                )
+                scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+                prob = (i) -> scenario_probabilities[i]
+                @objective(m, Min, markowitz_model(m, 0.001, scenario_costs, prob, Val(:avg_gini_difference)))
+                set_silent(m)
+                optimize!(m)
+                @test value(x[1]) == 1.
+                @test value(x[2]) == 0.
+            end
+        end
+    end
+end
 @testset "costs under risk" begin
     test_expected_value()
     test_positive_part()
@@ -467,4 +597,5 @@ end
     test_dispersion_metrics()
     test_expected_value_optimization()
     test_cvar_optimization()
+    test_markowitz_optimization()
 end

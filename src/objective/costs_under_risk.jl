@@ -77,7 +77,7 @@ expected_value(scenario_costs, probability::Function) = sum(cost * probability(s
 """
 function cvar(m::Model, beta::Float64, scenario_costs::Dict, scenario_probability::Function)
     !(0 < beta <= 1) && throw(DomainError(beta, "parameter not in the domain 0 < beta <= 1"))
-    @variable(m, v) # TODO: save the v
+    @variable(m, v)
     p = scenario_probability
     return v + 1/beta * sum(p(scen) * positive_part_of_lp_term(m, cost - v) for (scen, cost) in scenario_costs; init=0)
 end
@@ -93,7 +93,7 @@ end
     - scenario_probability - a function that for evey scenario returns its probability 
 """
 function markowitz_model(m::Model, lambda::Float64, scenario_costs::Dict, scenario_probability::Function, dispersion_type::Val)
-    !(0 < lambda <= 1) && throw(DomainError(lambda, "parameter not in the domain 0 < lambda <= 1"))
+    !(0 < lambda < 1) && throw(DomainError(lambda, "parameter not in the domain 0 < lambda < 1"))
     mu = expected_value(scenario_costs, scenario_probability)
     delta = dispersion_metric(m, scenario_costs, scenario_probability, dispersion_type)
     return mu + lambda * delta
@@ -153,7 +153,8 @@ end
 """
 function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:avg_semideviation})
     mu = expected_value(scenario_costs, probability)
-    return sum(probability(scen) * semideviation(m, cost, mu) for (scen, cost) in scenario_costs; init=0)
+    scenario_semideviations = Dict(scen => semideviation(m, cost, mu) for (scen, cost) in scenario_costs)
+    return expected_value(scenario_semideviations, probability)
 end
 
 """
