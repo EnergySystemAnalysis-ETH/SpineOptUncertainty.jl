@@ -26,9 +26,8 @@ end
 
 expected_value(scenario_costs, probability::Function) = sum(cost * probability(scen) for (scen, cost) in scenario_costs; init=0)
 
-function positive_part_of_lp_term(m::Model, term)
-    d = @variable(m)
-    @constraint(m, d >= 0)
+function positive_part_of_lp_term(m::Model, term, auxilary_var_name::String="")
+    d = @variable(m, lower_bound=0, base_name=auxilary_var_name)
     @constraint(m, d >= term)
     return d
 end
@@ -59,11 +58,10 @@ function markowitz_model(m::Model, lambda::Float64, scenario_costs::Dict, scenar
 end
 
 function dispersion_metric(m::Model, mu, scenario_costs::Dict, probability::Function, ::Val{:max_semideviation})
-    d = @variable(m)
+    d = @variable(m, lower_bound=0)
     for (scen, cost) in scenario_costs
         @constraint(m, d >= cost - mu)
     end
-    @constraint(m, d >= 0)
     return d
 end
 
