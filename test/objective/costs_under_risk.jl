@@ -59,6 +59,82 @@ function test_expected_value()
     end
 end
 
+function test_positive_part()
+    @testset "positive part of lp term" begin
+        @testset "positive part of a float terms" begin
+            @testset "positive part of negative term" begin
+                m = Model(HiGHS.Optimizer)
+                d = positive_part_of_lp_term(m, -5)
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.
+            end
+            @testset "positive part of zero term" begin
+                m = Model(HiGHS.Optimizer)
+                d = positive_part_of_lp_term(m, 0)
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.
+            end
+            @testset "positive part of positive term" begin
+                @testset "positive part of zero term" begin
+                    m = Model(HiGHS.Optimizer)
+                    d = positive_part_of_lp_term(m, 5)
+                    @objective(m, Min, d)
+                    set_silent(m)
+                    optimize!(m)
+                    @test value(d) == 5.
+                end 
+            end
+        end
+        @testset "positive part of a expression terms" begin
+            @testset "positive part of negative term" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, -2 <= x)
+                d = positive_part_of_lp_term(m, x)
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.
+            end
+            @testset "positive part of zero term" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, 0 <= x)
+                d = positive_part_of_lp_term(m, x)
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 0.
+            end
+            @testset "positive part of positive term" begin
+                m = Model(HiGHS.Optimizer)
+                @variable(m, 1 <= x)
+                d = positive_part_of_lp_term(m, x)
+                @objective(m, Min, d)
+                set_silent(m)
+                optimize!(m)
+                @test value(d) == 1.
+            end
+        end
+    end
+    @testset "auxilary_var_name" begin
+        @testset "no name given" begin
+            m = Model(HiGHS.Optimizer)
+            d = positive_part_of_lp_term(m, 0)
+            @test name(d) == ""
+        end
+        @testset "name given" begin
+            m = Model(HiGHS.Optimizer)
+            d = positive_part_of_lp_term(m, 0, "abc")
+            @test name(d) == "abc"
+        end
+        
+    end
+end
+
 @testset "costs under risk" begin
     test_expected_value()
+    test_positive_part()
 end
