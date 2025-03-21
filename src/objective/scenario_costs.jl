@@ -37,12 +37,3 @@ const scenario_cost_parts = [
 
 create_scenario_costs(m, t_range) = mergewith(+, (getproperty(SpineOpt, cost_part)(m, t_range) for cost_part in scenario_cost_parts)...)
 create_scenario_costs(m, in_window, beyond_window) = mergewith(+, create_scenario_costs(m, in_window), create_scenario_costs(m, beyond_window))
-
-function create_scenario_costs_in_current_window(m)
-    window_end = end_(current_window(m))
-    window_very_end = maximum(end_.(time_slice(m)))
-    beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
-    in_window = collect(to_time_slice(m; t=current_window(m)))
-    filter!(t -> !(t in in_window), beyond_window)
-    return create_scenario_costs(m, in_window, beyond_window)
-end
