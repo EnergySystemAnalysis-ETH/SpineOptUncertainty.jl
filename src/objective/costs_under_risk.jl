@@ -35,12 +35,6 @@ function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:markowitz})
     return markowitz_model(m::Model, lambda, scenario_costs, scenario_probability(m), dispersion_type)
 end
 
-function positive_part_of_lp_term(m::Model, term, auxilary_var_name::String="")
-    d = @variable(m, lower_bound=0, base_name=auxilary_var_name)
-    @constraint(m, d >= term)
-    return d
-end
-
 expected_value(scenario_costs, probability::Function) = sum(cost * probability(scen) for (scen, cost) in scenario_costs; init=0)
 
 function cvar(m::Model, beta::Float64, scenario_costs::Dict, scenario_probability::Function)
@@ -57,18 +51,26 @@ function markowitz_model(m::Model, lambda::Float64, scenario_costs::Dict, scenar
     return mu + lambda * delta
 end
 
+function positive_part_of_lp_term(m::Model, term, auxilary_var_name::String="")
+    d = @variable(m, lower_bound=0, base_name=auxilary_var_name)
+    @constraint(m, d >= term)
+    return d
+end
+
+semideviation(m::Model, cost, mu) = positive_part_of_lp_term(m, cost - mu)
+
 function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:max_semideviation})
     mu = expected_value(scenario_costs, probability)
     d = @variable(m, lower_bound=0)
     for (scen, cost) in scenario_costs
-        @constraint(m, d >= cost - mu)
+        @constraint(m, d >= semideviation(m, cost, mu))
     end
     return d
 end
 
 function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:avg_semideviation})
     mu = expected_value(scenario_costs, probability)
-    return sum(probability(scen) * positive_part_of_lp_term(m, cost - mu) for (scen, cost) in scenario_costs; init=0)
+    return sum(probability(scen) * semideviation(m, cost, mu) for (scen, cost) in scenario_costs; init=0)
 end
 
 function dispersion_metric(m::Model, scenario_costs::Dict, probability::Function, ::Val{:avg_gini_difference})
