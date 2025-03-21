@@ -21,7 +21,8 @@ using SpineOpt:
     expected_value,
     positive_part_of_lp_term,
     semideviation,
-    dispersion_metric
+    dispersion_metric,
+    cvar
 
 using JuMP
 using HiGHS
@@ -374,9 +375,96 @@ function test_dispersion_metrics()
     end
 end
 
+function test_expected_value_optimization()
+    @testset "expected value optimization" begin
+        m = Model(HiGHS.Optimizer)
+        @variable(m, x[1:2] >= 0)
+        @constraint(m, x[1] + x[2] == 1)
+        scenario_costs = Dict(
+            :a => x[1] + 10x[2],
+            :b => 100x[1] 
+        )
+        scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+        prob = (i) -> scenario_probabilities[i]
+        @objective(m, Min, expected_value(scenario_costs, prob))
+        set_silent(m)
+        optimize!(m)
+        @test value(x[1]) == 1.0
+        @test value(x[2]) == 0.0
+    end
+end
+
+function test_cvar_optimization()
+    @testset "cvar optimization" begin
+        @testset "invalid beta parameter" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, x[1:2] >= 0)
+            @constraint(m, x[1] + x[2] == 1)
+            scenario_costs = Dict(
+                :a => x[1] + 10x[2],
+                :b => 100x[1]
+            )
+            scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+            prob = (i) -> scenario_probabilities[i]
+            @test_throws DomainError cvar(m, 0., scenario_costs, prob)
+            @test_throws DomainError cvar(m, 2., scenario_costs, prob)
+        end
+        @testset "risk-averse cvar" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, x[1:2] >= 0)
+            @constraint(m, x[1] + x[2] == 1)
+            scenario_costs = Dict(
+                :a => x[1] + 10x[2],
+                :b => 100x[1] 
+            )
+            scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+            prob = (i) -> scenario_probabilities[i]
+            @objective(m, Min, cvar(m, 0.01, scenario_costs, prob))
+            set_silent(m)
+            optimize!(m)
+            @test isapprox(value(x[1]), 10/109)
+            @test isapprox(value(x[2]), 1-10/109)
+        end
+        @testset "less risk-averse cvar" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, x[1:2] >= 0)
+            @constraint(m, x[1] + x[2] == 1)
+            scenario_costs = Dict(
+                :a => x[1] + 10x[2],
+                :b => 100x[1] 
+            )
+            scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+            prob = (i) -> scenario_probabilities[i]
+            @objective(m, Min, cvar(m, 0.90, scenario_costs, prob))
+            set_silent(m)
+            optimize!(m)
+            @test value(x[1]) == 1.0
+            @test value(x[2]) == 0.0
+        end
+        @testset "risk-neutral cvar" begin
+            m = Model(HiGHS.Optimizer)
+            @variable(m, x[1:2] >= 0)
+            @constraint(m, x[1] + x[2] == 1)
+            scenario_costs = Dict(
+                :a => x[1] + 10x[2],
+                :b => 100x[1]
+            )
+            scenario_probabilities = Dict(:a => 0.99, :b => 0.01)
+            prob = (i) -> scenario_probabilities[i]
+            @objective(m, Min, cvar(m, 1.0, scenario_costs, prob))
+            set_silent(m)
+            optimize!(m)
+            @test value(x[1]) == 1.0
+            @test value(x[2]) == 0.0
+        end
+    end
+end
+
 @testset "costs under risk" begin
     test_expected_value()
     test_positive_part()
     test_semideviation()
     test_dispersion_metrics()
+    test_expected_value_optimization()
+    test_cvar_optimization()
 end
