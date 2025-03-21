@@ -24,7 +24,16 @@ function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:expected_value
     return expected_value(scenario_costs, scenario_probability(m))
 end
 
-expected_value(scenario_costs, probability::Function) = sum(cost * probability(scen) for (scen, cost) in scenario_costs; init=0)
+function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:cvar})
+    beta = cvar_percentage(model=m.ext[:spineopt].instance)
+    return cvar(m, beta, scenario_costs, scenario_probability(m)) 
+end
+
+function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:markowitz})
+    lambda = dispersion_to_mean_cost_weight(model=m.ext[:spineopt].instance)
+    dispersion_type = Val(dispersion_measure(model=m.ext[:spineopt].instance))
+    return markowitz_model(m::Model, lambda, scenario_costs, scenario_probability(m), dispersion_type)
+end
 
 function positive_part_of_lp_term(m::Model, term, auxilary_var_name::String="")
     d = @variable(m, lower_bound=0, base_name=auxilary_var_name)
@@ -32,22 +41,13 @@ function positive_part_of_lp_term(m::Model, term, auxilary_var_name::String="")
     return d
 end
 
-function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:cvar})
-    beta = cvar_percentage(model=m.ext[:spineopt].instance)
-    return cvar(m, beta, scenario_costs, scenario_probability(m)) 
-end
+expected_value(scenario_costs, probability::Function) = sum(cost * probability(scen) for (scen, cost) in scenario_costs; init=0)
 
 function cvar(m::Model, beta::Float64, scenario_costs::Dict, scenario_probability::Function)
     !(0 < beta <= 1) && throw(DomainError(beta, "parameter not in the domain 0 < beta <= 1"))
     @variable(m, v) # TODO: save the v
     p = scenario_probability
     return v + 1/beta * sum(p(scen) * positive_part_of_lp_term(m, cost - v) for (scen, cost) in scenario_costs; init=0)
-end
-
-function costs_under_risk!(m::Model, scenario_costs::Dict, ::Val{:markowitz})
-    lambda = dispersion_to_mean_cost_weight(model=m.ext[:spineopt].instance)
-    dispersion_type = Val(dispersion_measure(model=m.ext[:spineopt].instance))
-    return markowitz_model(m::Model, lambda, scenario_costs, scenario_probability(m), dispersion_type)
 end
 
 function markowitz_model(m::Model, lambda::Float64, scenario_costs::Dict, scenario_probability::Function, dispersion_type::Val)
