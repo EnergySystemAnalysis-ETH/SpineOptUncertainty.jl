@@ -84,7 +84,7 @@ expected_value(scenario_costs, probability::Function) = sum(cost * probability(s
     - path_costs - a dictionary with paths as keys and their respective cost functions as values
     - path_probability - a function that for evey path returns its probability 
 """
-function cvar(m::Model, beta::Float64, path_costs::Dict, path_probability::Function)
+function cvar(m::Model, beta, path_costs::Dict, path_probability::Function)
     !(0 < beta <= 1) && throw(DomainError(beta, "parameter not in the domain 0 < beta <= 1"))
     @variable(m, v)
     return v + 1/beta * sum(path_probability(scen) * positive_part_of_lp_term(m, cost - v) for (scen, cost) in path_costs; init=0)
@@ -100,7 +100,7 @@ end
     - path_costs - a dictionary with paths as keys and their respective cost functions as values
     - path_probability - a function that for evey scenario returns its probability 
 """
-function markowitz_model(m::Model, lambda::Float64, path_costs::Dict, path_probability::Function, dispersion_type::Val)
+function markowitz_model(m::Model, lambda, path_costs::Dict, path_probability::Function, dispersion_type::Val)
     !(0 < lambda < 1) && throw(DomainError(lambda, "parameter not in the domain 0 < lambda < 1"))
     mu = expected_value(path_costs, path_probability)
     delta = dispersion_metric(m, path_costs, path_probability, dispersion_type)
