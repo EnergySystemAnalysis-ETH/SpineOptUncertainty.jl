@@ -35,6 +35,8 @@ function add_constraint_units_invested_available!(m::Model)
 end
 
 function _build_constraint_units_invested_available(m::Model, u, s, t)
-    @fetch units_invested_available = m.ext[:spineopt].variables
-    @build_constraint(units_invested_available[u, s, t] <= candidate_units(m; unit=u, stochastic_scenario=s, t=t))
+    # @fetch units_invested_available = m.ext[:spineopt].variables
+    # @build_constraint(units_invested_available[u, s, t] <= candidate_units(m; unit=u, stochastic_scenario=s, t=t))
+    @fetch units_invested = m.ext[:spineopt].variables
+    @build_constraint(units_invested[u, s, t] <= candidate_units(m; unit=u, stochastic_scenario=s, t=t))
 end
