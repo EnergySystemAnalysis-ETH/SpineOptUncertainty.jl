@@ -23,21 +23,24 @@
 Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model, t_range)
+    return costs_under_risk!(m, res_proc_costs_in_scenario_costs(m, t_range), Val(:expected_value))
+end
+
+function res_proc_costs_in_scenario_costs(m::Model, t_range)
     @fetch unit_flow = m.ext[:spineopt].variables
-    @expression(
-        m,
-        sum(
-            unit_flow[u, n, d, s, t]
-            * (use_economic_representation(model=m.ext[:spineopt].instance) ?
-               unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
-            ) 
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * reserve_procurement_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
-            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-            for (u, ng, d) in indices(reserve_procurement_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range);
-            init=0,
-        )
-    )
+    res_proc_costs = DefaultDict(0.0)
+    for (u, ng, d) in indices(reserve_procurement_cost)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, t=t_range)
+            res_proc_costs[s] += (
+                unit_flow[u, n, d, s, t]
+                * (use_economic_representation(model=m.ext[:spineopt].instance) ?
+                   unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
+                ) 
+                * duration(t)
+                * prod(weight(temporal_block=blk) for blk in blocks(t))
+                * reserve_procurement_cost(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)
+            )
+        end
+    end
+    return Dict(res_proc_costs)
 end

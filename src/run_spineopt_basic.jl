@@ -75,7 +75,7 @@ function build_model!(m; log_level)
     @timelog log_level 2 "Adding $model_name variables...\n" _add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name expressions...\n" _add_expressions!(m; log_level=log_level)
     @timelog log_level 2 "Adding $model_name constraints...\n" _add_constraints!(m; log_level=log_level)
-    @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m)
+    @timelog log_level 2 "Setting $model_name objective..." _set_objective!(m, Val(risk_approach(model=m.ext[:spineopt].instance)))
     _init_outputs!(m)
     _build_stage_models!(m; log_level)
     _call_event_handlers(m, :model_built)
@@ -227,19 +227,7 @@ function _add_constraints!(m; log_level=3)
     _update_constraint_names!(m)
 end
 
-function _set_objective!(m::Model)
-    _create_objective_terms!(m)
-    total_discounted_costs = sum(
-        in_window + beyond_window for (in_window, beyond_window) in values(m.ext[:spineopt].objective_terms)
-    )
-    if !iszero(total_discounted_costs)
-        @objective(m, Min, total_discounted_costs)
-    else
-        @warn "no objective terms defined"
-    end
-end
-
-function _create_objective_terms!(m)
+function _set_objective!(m::Model, risk_approach=Val(:expected_value))
     window_end = end_(current_window(m))
     window_very_end = maximum(end_.(time_slice(m)))
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
@@ -249,7 +237,26 @@ function _create_objective_terms!(m)
         func = getproperty(SpineOpt, term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
+    scenario_costs = create_scenario_costs(m, in_window, beyond_window)
+    total_costs = costs_under_risk!(m, scenario_costs, risk_approach)
+    if !iszero(total_costs)
+        @objective(m, Min, total_costs)
+    else
+        @warn "no objective terms defined"
+    end
 end
+
+# function _create_objective_terms!(m)
+#     window_end = end_(current_window(m))
+#     window_very_end = maximum(end_.(time_slice(m)))
+#     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
+#     in_window = collect(to_time_slice(m; t=current_window(m)))
+#     filter!(t -> !(t in in_window), beyond_window)
+    # for term in objective_terms(m; benders_master=!_is_benders_subproblem(m))
+    #     func = getproperty(SpineOpt, term)
+    #     m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
+    # end
+# end
 
 function _init_outputs!(m::Model)
     for out_name in _output_names(m)
@@ -674,6 +681,7 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
+    m.ext[:spineopt].objective_terms
     total_costs = total_costs_tail = 0
     for (term, (in_window, beyond_window)) in m.ext[:spineopt].objective_terms
         cost, cost_tail = JuMP.value(realize(in_window)), JuMP.value(realize(beyond_window))

@@ -23,10 +23,14 @@
 Create an expression for units_on cost.
 """
 function units_on_costs(m::Model, t_range)
+    return costs_under_risk!(m, units_on_costs_in_scenario_costs(m, t_range), Val(:expected_value))
+end
+
+function units_on_costs_in_scenario_costs(m::Model, t_range)
     @fetch units_on = m.ext[:spineopt].variables
-    @expression(
-        m,
-        sum(
+    units_on_costs = DefaultDict(0.0)
+    for (u, s, t) in units_on_indices(m; unit=indices(units_on_cost), t=t_range)
+        units_on_costs[s] += (
             + units_on[u, s, t]
             * (use_economic_representation(model=m.ext[:spineopt].instance) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
@@ -34,12 +38,7 @@ function units_on_costs(m::Model, t_range)
             * duration(t)
             * units_on_cost(m; unit=u, stochastic_scenario=s, t=t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            # This term is activated when there is a representative termporal block in those containing TimeSlice t.
-            # We assume only one representative temporal structure available, of which the termporal blocks represent
-            # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
-            * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_on_indices(m; unit=indices(units_on_cost), t=t_range);
-            init=0,
         )
-    )
+    end
+    return Dict(units_on_costs)
 end

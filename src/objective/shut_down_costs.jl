@@ -23,19 +23,21 @@
 Create an expression for unit shutdown costs.
 """
 function shut_down_costs(m::Model, t_range)
+    return costs_under_risk!(m, shut_down_costs_in_scenario_costs(m, t_range), Val(:expected_value))
+end
+
+function shut_down_costs_in_scenario_costs(m::Model, t_range)
     @fetch units_shut_down = m.ext[:spineopt].variables
-    @expression(
-        m,
-        sum(
+    unit_shut_down_costs = DefaultDict(0.0)
+    for (u, s, t) in units_on_indices(m; unit=indices(shut_down_cost), t=t_range)
+        unit_shut_down_costs[s] += (
             + units_shut_down[u, s, t]
             * shut_down_cost(m; unit=u, stochastic_scenario=s, t=t)
             * (use_economic_representation(model=m.ext[:spineopt].instance) ?
                unit_discounted_duration[(unit=u, stochastic_scenario=s, t=t)] : 1
             ) 
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_on_indices(m; unit=indices(shut_down_cost), t=t_range);
-            init=0,
         )
-    )
+    end
+    return Dict(unit_shut_down_costs)
 end

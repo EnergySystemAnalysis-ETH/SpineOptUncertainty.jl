@@ -23,23 +23,7 @@
 Create and expression for unit investment costs.
 """
 function unit_investment_costs(m::Model, t_range)
-    @fetch units_invested = m.ext[:spineopt].variables
-    unit = indices(unit_investment_cost)
-    @expression(
-        m,
-        + sum(
-            + units_invested[u, s, t]
-            * _unit_weight_for_economic_representation(m; u, s, t)
-            * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            # This term is activated when there is a representative temporal block in those containing TimeSlice t.
-            # We assume only one representative temporal structure available, of which the temporal blocks represent
-            # an extended period of time with a weight >=1, e.g. a representative month represents 3 months.
-            * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_invested_available_indices(m; unit=unit, t=t_range);
-            init=0,
-        )
-    )
+    return costs_under_risk!(m, unit_investment_costs_in_scenario_costs(m, t_range), Val(:expected_value))
 end
 
 function _unit_weight_for_economic_representation(m; u, s, t)
@@ -50,4 +34,20 @@ function _unit_weight_for_economic_representation(m; u, s, t)
     else
         return 1
     end
+end
+
+
+function unit_investment_costs_in_scenario_costs(m::Model, t_range)
+    @fetch units_invested = m.ext[:spineopt].variables
+    unit = indices(unit_investment_cost)
+    unit_investment_costs = DefaultDict(0.0)
+    for (u, s, t) in units_invested_available_indices(m; unit=unit, t=t_range)
+        unit_investment_costs[s] += (
+            + units_invested[u, s, t]
+            * _unit_weight_for_economic_representation(m; u, s, t)
+            * unit_investment_cost(m; unit=u, stochastic_scenario=s, t=t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+        )
+    end
+    return Dict(unit_investment_costs)
 end

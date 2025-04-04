@@ -42,10 +42,12 @@ const all_objective_terms = unique!([mp_terms; sp_terms])
 Expression corresponding to the sume of all cost terms for given model, and within the given range of time.
 """
 function total_costs(m, t_range; benders_master=true, benders_subproblem=true)
-    sum(
-        getproperty(SpineOpt, term)(m, t_range)
-        for term in objective_terms(m; benders_master=benders_master, benders_subproblem=benders_subproblem)
-    )
+    costs_under_risk!(m, create_scenario_costs(m, t_range), Val(:expected_value)) 
+    # TODO
+    # sum(
+    #     getproperty(SpineOpt, term)(m, t_range)
+    #     for term in objective_terms(m; benders_master=benders_master, benders_subproblem=benders_subproblem)
+    # )
 end
 
 function objective_terms(m; benders_master=true, benders_subproblem=true)
