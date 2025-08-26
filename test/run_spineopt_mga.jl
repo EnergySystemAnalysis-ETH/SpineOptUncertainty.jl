@@ -387,110 +387,110 @@ function _test_run_spineopt_mga()
             end
             # FIXME: add for connection and node
         end
-        # @testset "mga_diff_lb2" begin
-        #     constraint = m.ext[:spineopt].constraints[:mga_diff_lb2]
-        #     @test length(constraint) == 6
-        #     scenarios = (stochastic_scenario(:parent), )
-        #     time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
-        #     mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
-        #     @testset for (s, t) in zip(scenarios, time_slices)
-        #         key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
-        #         key1 = (unit(:unit_ab), s, t)
-        #         key2 = (unit(:unit_bc), s, t)
-        #         var_u_inv_1 = var_units_invested[key1...]
-        #         var_u_inv_2 = var_units_invested[key2...]
-        #         tail = (stochastic_scenario=s, t=t)
-        #         prev_mga_results_1 = SpineOpt._mga_result(m, :units_invested, (unit=unit(:unit_ab), tail...), mga_it)
-        #         prev_mga_results_2 = SpineOpt._mga_result(m, :units_invested, (unit=unit(:unit_bc), tail...), mga_it)
-        #         expected_con = @build_constraint(
-        #             var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-        #         )
-        #         con = constraint[key...]
-        #         observed_con = constraint_object(con)
-        #         @test _is_constraint_equal(observed_con, expected_con)
-        #     end
-        #     @testset for (s, t) in zip(scenarios, time_slices)
-        #          key = (connection=connection(:connection_group_abbc),mga_iteration=mga_current_iteration)
-        #         key1 = (connection(:connection_ab), s, t)
-        #         key2 = (connection(:connection_bc), s, t)
-        #         var_u_inv_1 = var_connections_invested[key1...]
-        #         var_u_inv_2 = var_connections_invested[key2...]
-        #         tail = (stochastic_scenario=s, t=t)
-        #         prev_mga_results_1 = SpineOpt._mga_result(
-        #             m, :connections_invested, (connection=connection(:connection_ab), tail...), mga_it
-        #         )
-        #         prev_mga_results_2 = SpineOpt._mga_result(
-        #             m, :connections_invested, (connection=connection(:connection_bc), tail...), mga_it
-        #         )
-        #         expected_con = @build_constraint(
-        #             var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-        #         )
-        #         con = constraint[key...]
-        #         observed_con = constraint_object(con)
-        #         @test _is_constraint_equal(observed_con, expected_con)
-        #     end
-        #     @testset for (s, t) in zip(scenarios, time_slices)
-        #         key = (node=node(:node_group_bc),mga_iteration=mga_current_iteration)
-        #         key1 = (node(:node_b), s, t)
-        #         key2 = (node(:node_c), s, t)
-        #         var_u_inv_1 = var_storages_invested[key1...]
-        #         var_u_inv_2 = var_storages_invested[key2...]
-        #         tail = (stochastic_scenario=s, t=t)
-        #         prev_mga_results_1 = SpineOpt._mga_result(m, :storages_invested, (node=node(:node_b), tail...), mga_it)
-        #         prev_mga_results_2 = SpineOpt._mga_result(m, :storages_invested, (node=node(:node_c), tail...), mga_it)
-        #         expected_con = @build_constraint(
-        #             var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
-        #         )
-        #         con = constraint[key...]
-        #         observed_con = constraint_object(con)
-        #         @test _is_constraint_equal(observed_con, expected_con)
-        #     end
-        #     # FIXME: add for connection and node
-        # end
-        # @testset "mga_slack_constraint" begin
-        #     constraint = m.ext[:spineopt].constraints[:mga_slack_constraint]
-        #     @test length(constraint) == 1
-        #     scenarios = (stochastic_scenario(:parent),)
-        #     time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
-        #     mga_first_iteration = SpineOpt.mga_iteration()[1]
-        #     mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
-        #     @testset for (s, t) in zip(scenarios, time_slices)
-        #         key1 = (unit(:unit_ab), s, t)
-        #         key2 = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
-        #         var_u_inv_1 = var_units_invested[key1...]
-        #         var_u_inv_2 = var_unit_flow[key2...]
-        #         first_obj_result = SpineOpt._mga_result(
-        #             m, :total_costs, (model=model(:instance), t=t), mga_first_iteration
-        #         )
-        #         expected_con = @build_constraint(
-        #             var_u_inv_2 * 2 * fuel_cost + var_u_inv_1 <= first_obj_result * (1 + mga_slack)
-        #         )
-        #         con = constraint[model(:instance)]
-        #         observed_con = constraint_object(con)
-        #         @test _is_constraint_equal(observed_con, expected_con)
-        #     end
-        #     # FIXME: add for connection and node
-        # end
-        # @testset "mga_objective_ub" begin
-        #     constraint = m.ext[:spineopt].constraints[:mga_objective_ub]
-        #     @test length(constraint) == 1
-        #     scenarios = (stochastic_scenario(:parent),)
-        #     t = SpineOpt.current_window(m)
-        #     var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
-        #     mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end-1]
-        #     key1 = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
-        #     key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
-        #     key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
-        #     key4 = (model = model(:instance), t=t)
-        #     mga_aux_diff_1 = var_mga_aux_diff[key1]
-        #     mga_aux_diff_2 = var_mga_aux_diff[key2]
-        #     mga_aux_diff_3 = var_mga_aux_diff[key3]
-        #     var_mga_objective1 = var_mga_objective[key4]
-        #     expected_con = @build_constraint(var_mga_objective1 <= mga_aux_diff_1 + mga_aux_diff_2 + mga_aux_diff_3)
-        #     con = constraint[(model = model(:instance),)]
-        #     observed_con = constraint_object(con)
-        #     @test _is_constraint_equal(observed_con, expected_con)
-        # end
+        @testset "mga_diff_lb2" begin
+            constraint = m.ext[:spineopt].constraints[:mga_diff_lb2]
+            @test length(constraint) == 6
+            scenarios = (stochastic_scenario(:parent), )
+            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
+            @testset for (s, t) in zip(scenarios, time_slices)
+                key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
+                key1 = (unit(:unit_ab), s, t)
+                key2 = (unit(:unit_bc), s, t)
+                var_u_inv_1 = var_units_invested[key1...]
+                var_u_inv_2 = var_units_invested[key2...]
+                tail = (stochastic_scenario=s, t=t)
+                prev_mga_results_1 = SpineOpt._mga_result(m, :units_invested, (unit=unit(:unit_ab), tail...), mga_it)
+                prev_mga_results_2 = SpineOpt._mga_result(m, :units_invested, (unit=unit(:unit_bc), tail...), mga_it)
+                expected_con = @build_constraint(
+                    var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
+                )
+                con = constraint[key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+            @testset for (s, t) in zip(scenarios, time_slices)
+                 key = (connection=connection(:connection_group_abbc),mga_iteration=mga_current_iteration)
+                key1 = (connection(:connection_ab), s, t)
+                key2 = (connection(:connection_bc), s, t)
+                var_u_inv_1 = var_connections_invested[key1...]
+                var_u_inv_2 = var_connections_invested[key2...]
+                tail = (stochastic_scenario=s, t=t)
+                prev_mga_results_1 = SpineOpt._mga_result(
+                    m, :connections_invested, (connection=connection(:connection_ab), tail...), mga_it
+                )
+                prev_mga_results_2 = SpineOpt._mga_result(
+                    m, :connections_invested, (connection=connection(:connection_bc), tail...), mga_it
+                )
+                expected_con = @build_constraint(
+                    var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
+                )
+                con = constraint[key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+            @testset for (s, t) in zip(scenarios, time_slices)
+                key = (node=node(:node_group_bc),mga_iteration=mga_current_iteration)
+                key1 = (node(:node_b), s, t)
+                key2 = (node(:node_c), s, t)
+                var_u_inv_1 = var_storages_invested[key1...]
+                var_u_inv_2 = var_storages_invested[key2...]
+                tail = (stochastic_scenario=s, t=t)
+                prev_mga_results_1 = SpineOpt._mga_result(m, :storages_invested, (node=node(:node_b), tail...), mga_it)
+                prev_mga_results_2 = SpineOpt._mga_result(m, :storages_invested, (node=node(:node_c), tail...), mga_it)
+                expected_con = @build_constraint(
+                    var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
+                )
+                con = constraint[key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+            # FIXME: add for connection and node
+        end
+        @testset "mga_slack_constraint" begin
+            constraint = m.ext[:spineopt].constraints[:mga_slack_constraint]
+            @test length(constraint) == 1
+            scenarios = (stochastic_scenario(:parent),)
+            time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            mga_first_iteration = SpineOpt.mga_iteration()[1]
+            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end - 1]
+            @testset for (s, t) in zip(scenarios, time_slices)
+                key1 = (unit(:unit_ab), s, t)
+                key2 = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
+                var_u_inv_1 = var_units_invested[key1...]
+                var_u_inv_2 = var_unit_flow[key2...]
+                first_obj_result = SpineOpt._mga_result(
+                    m, :total_costs, (model=model(:instance), t=t), mga_first_iteration
+                )
+                expected_con = @build_constraint(
+                    var_u_inv_2 * 2 * fuel_cost + var_u_inv_1 <= first_obj_result * (1 + mga_slack)
+                )
+                con = constraint[model(:instance)]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+            # FIXME: add for connection and node
+        end
+        @testset "mga_objective_ub" begin
+            constraint = m.ext[:spineopt].constraints[:mga_objective_ub]
+            @test length(constraint) == 1
+            scenarios = (stochastic_scenario(:parent),)
+            t = SpineOpt.current_window(m)
+            var_mga_objective = m.ext[:spineopt].variables[:mga_objective]
+            mga_current_iteration = mga_it = SpineOpt.mga_iteration()[end-1]
+            key1 = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
+            key2 = (connection=connection(:connection_group_abbc), mga_iteration=mga_current_iteration)
+            key3 = (node=node(:node_group_bc), mga_iteration=mga_current_iteration)
+            key4 = (model = model(:instance), t=t)
+            mga_aux_diff_1 = var_mga_aux_diff[key1]
+            mga_aux_diff_2 = var_mga_aux_diff[key2]
+            mga_aux_diff_3 = var_mga_aux_diff[key3]
+            var_mga_objective1 = var_mga_objective[key4]
+            expected_con = @build_constraint(var_mga_objective1 <= mga_aux_diff_1 + mga_aux_diff_2 + mga_aux_diff_3)
+            con = constraint[(model = model(:instance),)]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
     end
 end
 

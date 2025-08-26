@@ -170,7 +170,7 @@ end
     # include("objective/objective.jl") # CRASHES with multithreading?
     # include("variables/variables.jl")
     # include("util/misc.jl")
-    # include("run_spineopt.jl") # CRASHES with multithreading?
+    include("run_spineopt.jl") # CRASHES with multithreading?
     include("run_spineopt_benders.jl")
     # include("run_spineopt_multi_stage.jl")
     # include("run_spineopt_investments.jl")
