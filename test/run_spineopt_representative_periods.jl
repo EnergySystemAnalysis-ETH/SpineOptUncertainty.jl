@@ -87,7 +87,7 @@ end
 
 function _test_representative_periods_setup()
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = joinpath(@__DIR__, "test_out.sqlite")
     url_out = "sqlite:///$file_path_out"
     test_data = _get_representative_periods_setup_data()
     _load_test_data(url_in, test_data)
@@ -244,7 +244,7 @@ function _test_representative_periods_no_index_found()
     @testset "representative_periods" begin
         @testset "no_index_found" begin
             url_in = "sqlite://"
-            file_path_out = "$(@__DIR__)/test_out.sqlite"
+            file_path_out = joinpath(@__DIR__, "test_out.sqlite")
             url_out = "sqlite:///$file_path_out"
             test_setup_data = _get_representative_periods_setup_data()
             # Remove the association with the representative temporal_block

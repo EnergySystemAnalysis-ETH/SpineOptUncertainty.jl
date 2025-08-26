@@ -20,7 +20,7 @@
 
 function _test_run_spineopt_investments_setup()
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = joinpath(@__DIR__, "test_out.sqlite")
     url_out = "sqlite:///$file_path_out"
     start, end_ = DateTime(2000), DateTime(2000, 1, 8)
     res = Hour(1)

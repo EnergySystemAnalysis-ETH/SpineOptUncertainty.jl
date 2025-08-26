@@ -50,7 +50,7 @@ end
 
 function setup(; number_of_weeks=1, n_count=50, add_meshed_network=true, add_investment=false, add_rolling=false)
     url_in = "sqlite://"
-    file_path_out = "$(@__DIR__)/test_out.sqlite"
+    file_path_out = joinpath(@__DIR__, "test_out.sqlite")
     url_out = "sqlite:///$file_path_out"
     t_count = 24 * 7 * number_of_weeks
     units = ["unit_$k" for k in 1:n_count]
