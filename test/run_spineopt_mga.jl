@@ -23,7 +23,7 @@ function _test_run_spineopt_mga_setup()
     solver_params = unparse_db_value(
         Map(
             ["HiGHS.jl"],
-            [Map(["random_seed"], [0]), Map(["threads"], [1])]))
+            [Map(["random_seed"], [0]), ]))#Map(["threads"], [1])]))
     test_data = Dict(
         :objects => [
             ["model", "instance"],
