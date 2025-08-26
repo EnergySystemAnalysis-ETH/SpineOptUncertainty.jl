@@ -24,9 +24,10 @@ end
 
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
-    file_path_out = tempname() * ".sqlite"
+    tmpfile = tempname() * ".sqlite"
+    atexit(() -> isfile(tmpfile) && rm(tmpfile))
     # file_path_out = joinpath(@__DIR__, "test_out.sqlite")
-    url_out = "sqlite:///$file_path_out"
+    url_out = "sqlite:///$tmpfile"
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -67,7 +68,7 @@ function _test_run_spineopt_benders_setup()
         ],
     )
     _load_test_data(url_in, test_data)
-    url_in, url_out, file_path_out
+    url_in, url_out, tmpfile
 end
 
 function _test_benders_unit()
@@ -138,8 +139,6 @@ function _test_benders_unit()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            # SpineInterface.close_connection(url_out)
-            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -255,8 +254,6 @@ function _test_benders_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            # SpineInterface.close_connection(url_out)
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -391,8 +388,6 @@ function _test_benders_unit_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            # SpineInterface.close_connection(url_out)
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
@@ -531,8 +526,6 @@ function _test_benders_rolling_representative_periods()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            # SpineInterface.close_connection(url_out)
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             using_spinedb(url_out, Y)
@@ -639,8 +632,6 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        # SpineInterface.close_connection(url_out)
-        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         m_mp = master_model(m)
         using_spinedb(url_out, Y)
@@ -726,8 +717,6 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            # SpineInterface.close_connection(url_out)
-            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
             cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio_cuts]
@@ -855,7 +844,6 @@ function _test_benders_starting_units_invested()
             )
             
             run_spineopt(url_in, url_out; log_level=0)
-            # SpineIneterface.close_connection(url_out)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
