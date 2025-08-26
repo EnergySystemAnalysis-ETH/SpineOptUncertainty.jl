@@ -137,6 +137,7 @@ function _test_benders_unit()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
@@ -253,6 +254,7 @@ function _test_benders_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
@@ -388,6 +390,7 @@ function _test_benders_unit_storage()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
@@ -527,6 +530,7 @@ function _test_benders_rolling_representative_periods()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
@@ -634,6 +638,7 @@ function _test_benders_rolling_representative_periods_yearly_investments_multipl
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
+        SpineInterface.close_connection(url_out)
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         m_mp = master_model(m)
@@ -720,6 +725,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio_cuts()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_model(m)
@@ -846,6 +852,7 @@ function _test_benders_starting_units_invested()
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
+            SpineInterface.close_connection(url_out)
             rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
