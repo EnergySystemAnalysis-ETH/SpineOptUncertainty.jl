@@ -24,9 +24,7 @@ end
 
 function _test_run_spineopt_benders_setup()
     url_in = "sqlite://"
-    tmpfile = tempname() * ".sqlite"
-    atexit(() -> isfile(tmpfile) && rm(tmpfile))
-    # file_path_out = joinpath(@__DIR__, "test_out.sqlite")
+    tmpfile = tempname(cleanup=true)
     url_out = "sqlite:///$tmpfile"
     test_data = Dict(
         :objects => [

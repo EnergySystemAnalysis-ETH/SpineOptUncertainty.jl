@@ -26,8 +26,7 @@ end
 
 function _test_run_spineopt_setup()
     url_in = "sqlite://"
-    file_path_out = tempname() * ".sqlite"
-    atexit(() -> isfile(file_path_out) && rm(file_path_out))
+    file_path_out = tempname(cleanup=true)
     url_out = "sqlite:///$file_path_out"
     test_data = Dict(
         :objects => [
