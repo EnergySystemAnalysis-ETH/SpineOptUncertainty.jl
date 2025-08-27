@@ -20,10 +20,10 @@
 
 function _test_run_spineopt_mga_setup()
     url_in = "sqlite://"
-    solver_params = unparse_db_value(
-        Map(
-            ["HiGHS.jl"],
-            [Map(["random_seed"], [0]), Map(["threads"], [1])]))
+    # solver_params = unparse_db_value(
+    #     Map(
+    #         ["HiGHS.jl"],
+    #         [Map(["random_seed"], [0]), Map(["threads"], [1])]))
     test_data = Dict(
         :objects => [
             ["model", "instance"],
@@ -111,7 +111,7 @@ function _test_run_spineopt_mga_setup()
             ["model", "instance", "model_algorithm", "mga_algorithm"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver_options", solver_params],
+            # ["model", "instance", "db_mip_solver_options", solver_params],
         ],
         :relationship_parameter_values => [
             [

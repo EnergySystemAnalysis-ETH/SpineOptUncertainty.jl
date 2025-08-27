@@ -781,10 +781,10 @@ function _test_benders_starting_units_invested()
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
         u_inv_cost = do_not_inv_cost + 1  # needed, not sure why
-        solver_params = unparse_db_value(
-            Map(
-                ["HiGHS.jl"],
-                [Map(["random_seed"], [0]), Map(["threads"], [1])]))
+        # solver_params = unparse_db_value(
+        #     Map(
+        #         ["HiGHS.jl"],
+        #         [Map(["random_seed"], [0]), Map(["threads"], [1])]))
         @testset for (max_iters, should_invest) in ((10, false), (1, true))
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
@@ -825,7 +825,7 @@ function _test_benders_starting_units_invested()
                 ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
-                ["model", "instance", "db_mip_solver_options", solver_params],
+                # ["model", "instance", "db_mip_solver_options", solver_params],
             ]
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
